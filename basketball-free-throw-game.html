@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basketball Free Throw Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-container {
+            position: relative;
+            width: 400px;
+            height: 500px;
+            background-color: #87CEEB; /* Sky blue background */
+            border: 2px solid #333;
+            border-radius: 10px;
+            overflow: hidden;
+            perspective: 800px;
+        }
+        .court {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 250px;
+            background-color: #cd853f;
+            border-top: 3px solid #333;
+        }
+        .backboard {
+            position: absolute;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 80px;
+            background-color: #fff;
+            border: 4px solid #000;
+            z-index: 2;
+        }
+        .backboard-square {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 50px;
+            border: 2px solid #000;
+        }
+        .rim {
+            position: absolute;
+            top: 180px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 5px;
+            background-color: #f00;
+            border-radius: 2px;
+            z-index: 3;
+        }
+        .net {
+            position: absolute;
+            top: 185px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 45px;
+            height: 40px;
+            background: repeating-linear-gradient(
+                90deg,
+                transparent,
+                transparent 5px,
+                rgba(255, 255, 255, 0.5) 5px,
+                rgba(255, 255, 255, 0.5) 10px
+            ),
+            repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 5px,
+                rgba(255, 255, 255, 0.5) 5px,
+                rgba(255, 255, 255, 0.5) 10px
+            );
+            border-radius: 0 0 25px 25px;
+            z-index: 1;
+        }
+        .ball {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 15px 15px, #f90, #c60);
+            border-radius: 50%;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.5);
+        }
+        .ball::after {
+            content: '';
+            position: absolute;
+            width: 90%;
+            height: 2px;
+            background-color: #000;
+            top: 50%;
+            left: 5%;
+            border-radius: 50%;
+        }
+        .ball::before {
+            content: '';
+            position: absolute;
+            width: 2px;
+            height: 90%;
+            background-color: #000;
+            top: 5%;
+            left: 50%;
+        }
+        .hands {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 30px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .hand {
+            width: 20px;
+            height: 30px;
+            background-color: #ffdbac;
+            border-radius: 5px;
+        }
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            width: 400px;
+            padding: 10px;
+            background-color: #333;
+            color: #fff;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .shot-clock {
+            padding: 5px 10px;
+            background-color: #f00;
+            border-radius: 5px;
+        }
+        .shots-left {
+            padding: 5px 10px;
+            background-color: #060;
+            border-radius: 5px;
+        }
+        .score {
+            padding: 5px 10px;
+            background-color: #00a;
+            border-radius: 5px;
+        }
+        .game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 20;
+        }
+        .game-over button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .instructions {
+            margin-top: 10px;
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            width: 400px;
+            text-align: center;
+        }
+        .power-meter {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 30px;
+            height: 200px;
+            background-color: #eee;
+            border: 2px solid #333;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+        .power-level {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0;
+            background: linear-gradient(to top, #f00, #ff0);
+            transition: height 0.1s;
+        }
+        .release-zone {
+            position: absolute;
+            top: 50px;
+            width: 100%;
+            height: 30px;
+            background-color: rgba(0, 255, 0, 0.3);
+            border-top: 1px dashed #080;
+            border-bottom: 1px dashed #080;
+        }
+        .shoot-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background-color: #f00;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        .aim-controls {
+            position: absolute;
+            bottom: 70px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .aim-row {
+            display: flex;
+            margin: 5px 0;
+        }
+        .aim-button {
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 0 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .space-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .space-indicator.active {
+            background-color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>Basketball Free Throw Game</h1>
+    
+    <div class="scoreboard">
+        <div class="score">Score: <span id="score">0</span></div>
+        <div class="shots-left">Shots Left: <span id="shots-left">5</span></div>
+        <div class="shot-clock">Shot Clock: <span id="shot-clock">24</span></div>
+    </div>
+    
+    <div class="game-container">
+        <div class="court"></div>
+        <div class="backboard">
+            <div class="backboard-square"></div>
+        </div>
+        <div class="rim"></div>
+        <div class="net"></div>
+        <div class="ball" id="ball"></div>
+        <div class="hands">
+            <div class="hand"></div>
+            <div class="hand"></div>
+        </div>
+        
+        <div class="power-meter">
+            <div class="release-zone"></div>
+            <div class="power-level" id="power-level"></div>
+        </div>
+        
+        <div class="aim-controls">
+            <div class="aim-row">
+                <button class="aim-button" id="aim-left">←</button>
+                <button class="aim-button" id="aim-right">→</button>
+            </div>
+        </div>
+        
+        <div class="space-indicator" id="space-indicator">SPACE</div>
+        <button class="shoot-button" id="shoot-button">SHOOT</button>
+        
+        <div class="game-over" id="game-over">
+            <h2>Game Over!</h2>
+            <p>Final Score: <span id="final-score">0</span></p>
+            <button id="restart-button">Play Again</button>
+        </div>
+    </div>
+    
+    <div class="instructions">
+        <p>Use the left/right buttons to aim, hold SPACE to set power, and release to throw!</p>
+        <p>Try to release when the power meter is in the green zone for the best shot!</p>
+        <p>You have 5 shots and 24 seconds per shot.</p>
+    </div>
+
+    <script>
+        // Game variables
+        let score = 0;
+        let shotsLeft = 5;
+        let shotClock = 24;
+        let shotClockTimer;
+        let powerInterval;
+        let powerIncreasing = true;
+        let power = 0;
+        let aimOffset = 0;
+        let isAnimating = false;
+        let ballX, ballY;
+        let velocityX, velocityY;
+        let gravity = 0.4;
+        let ballInHand = true;
+        let spacePressed = false;
+        
+        // DOM elements
+        const ball = document.getElementById('ball');
+        const powerLevel = document.getElementById('power-level');
+        const shootButton = document.getElementById('shoot-button');
+        const spaceIndicator = document.getElementById('space-indicator');
+        const aimLeftButton = document.getElementById('aim-left');
+        const aimRightButton = document.getElementById('aim-right');
+        const scoreDisplay = document.getElementById('score');
+        const shotsLeftDisplay = document.getElementById('shots-left');
+        const shotClockDisplay = document.getElementById('shot-clock');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+        
+        // Reset ball position
+        resetBall();
+        
+        // Event listeners
+        shootButton.addEventListener('mousedown', startPower);
+        shootButton.addEventListener('touchstart', startPower);
+        shootButton.addEventListener('mouseup', shoot);
+        shootButton.addEventListener('touchend', shoot);
+        aimLeftButton.addEventListener('click', aimLeft);
+        aimRightButton.addEventListener('click', aimRight);
+        restartButton.addEventListener('click', restartGame);
+        
+        // Keyboard controls
+        document.addEventListener('keydown', function(e) {
+            if (e.code === 'Space' && !spacePressed) {
+                spacePressed = true;
+                spaceIndicator.classList.add('active');
+                startPower();
+            }
+            if (e.code === 'ArrowLeft') {
+                aimLeft();
+            }
+            if (e.code === 'ArrowRight') {
+                aimRight();
+            }
+        });
+        
+        document.addEventListener('keyup', function(e) {
+            if (e.code === 'Space' && spacePressed) {
+                spacePressed = false;
+                spaceIndicator.classList.remove('active');
+                shoot();
+            }
+        });
+        
+        // Start shot clock
+        startShotClock();
+        
+        function startPower() {
+            if (!ballInHand || isAnimating) return;
+            
+            // Reset power
+            power = 0;
+            powerLevel.style.height = '0%';
+            
+            // Start increasing power
+            powerIncreasing = true;
+            clearInterval(powerInterval);
+            powerInterval = setInterval(() => {
+                if (powerIncreasing) {
+                    power += 1.5;
+                    if (power >= 100) {
+                        power = 100;
+                        powerIncreasing = false;
+                    }
+                } else {
+                    power -= 1.5;
+                    if (power <= 0) {
+                        power = 0;
+                        powerIncreasing = true;
+                    }
+                }
+                powerLevel.style.height = power + '%';
+            }, 20);
+        }
+        
+        function shoot() {
+            if (!ballInHand || isAnimating) return;
+            
+            clearInterval(powerInterval);
+            
+            // Start shot animation
+            ballInHand = false;
+            isAnimating = true;
+            shotsLeft--;
+            shotsLeftDisplay.textContent = shotsLeft;
+            
+            // Reset shot clock
+            clearInterval(shotClockTimer);
+            
+            // Get ball position
+            const ballRect = ball.getBoundingClientRect();
+            const containerRect = document.querySelector('.game-container').getBoundingClientRect();
+            
+            // Set initial position
+            ballX = (ballRect.left - containerRect.left);
+            ballY = (ballRect.top - containerRect.top);
+            
+            // Calculate ideal shot power (green zone is between 60-80%)
+            let shotPower = power;
+            const releaseQuality = Math.abs(70 - power); // 70% is the center of the green zone
+            
+            // Adjust shot accuracy based on release quality
+            let accuracyFactor = 1 - (releaseQuality / 100);
+            accuracyFactor = Math.max(0.5, accuracyFactor); // Min accuracy is 50%
+            
+            // Calculate velocity based on power and aim
+            const powerFactor = power / 10; // Increased power factor
+            velocityX = aimOffset * accuracyFactor;
+            velocityY = -powerFactor * accuracyFactor;
+            
+            // Animate shot
+            animateShot();
+        }
+        
+        function aimLeft() {
+            if (!ballInHand || isAnimating) return;
+            
+            aimOffset = Math.max(aimOffset - 0.5, -5);
+            ball.style.transform = `translateX(calc(-50% + ${aimOffset * 5}px))`;
+        }
+        
+        function aimRight() {
+            if (!ballInHand || isAnimating) return;
+            
+            aimOffset = Math.min(aimOffset + 0.5, 5);
+            ball.style.transform = `translateX(calc(-50% + ${aimOffset * 5}px))`;
+        }
+        
+        function animateShot() {
+            // Update ball position
+            velocityY += gravity;
+            ballX += velocityX;
+            ballY += velocityY;
+            
+            // Apply position
+            ball.style.left = `${ballX}px`;
+            ball.style.top = `${ballY}px`;
+            ball.style.bottom = 'auto';
+            
+            // Check if ball is in the hoop
+            const rimRect = document.querySelector('.rim').getBoundingClientRect();
+            const containerRect = document.querySelector('.game-container').getBoundingClientRect();
+            const ballRect = ball.getBoundingClientRect();
+            
+            const rimLeft = rimRect.left - containerRect.left;
+            const rimRight = rimRect.right - containerRect.left;
+            const rimTop = rimRect.top - containerRect.top;
+            
+            if (
+                ballY + 20 > rimTop - 5 && // Ball bottom below rim top
+                ballY < rimTop + 10 && // Ball top above rim bottom
+                ballX + 20 > rimLeft + 10 && // Ball right side right of rim left
+                ballX < rimRight - 10 && // Ball left side left of rim right
+                velocityY > 0 // Ball is moving downward
+            ) {
+                // Ball went through the hoop
+                score += 2;
+                scoreDisplay.textContent = score;
+            }
+            
+            // Check if ball is out of bounds
+            if (
+                ballX < -40 ||
+                ballX > 400 ||
+                ballY < -40 ||
+                ballY > 500
+            ) {
+                // Ball out of bounds, reset
+                endShot();
+                return;
+            }
+            
+            // Continue animation
+            if (isAnimating) {
+                requestAnimationFrame(animateShot);
+            }
+        }
+        
+        function endShot() {
+            isAnimating = false;
+            
+            // Check if game over
+            if (shotsLeft <= 0) {
+                gameOver();
+                return;
+            }
+            
+            // Reset for next shot
+            resetBall();
+            startShotClock();
+        }
+        
+        function resetBall() {
+            // Position ball in player's hands
+            ballInHand = true;
+            aimOffset = 0;
+            ball.style.transform = 'translateX(-50%)';
+            ball.style.left = '50%';
+            ball.style.top = 'auto';
+            ball.style.bottom = '50px';
+        }
+        
+        function startShotClock() {
+            shotClock = 24;
+            shotClockDisplay.textContent = shotClock;
+            
+            clearInterval(shotClockTimer);
+            shotClockTimer = setInterval(() => {
+                shotClock--;
+                shotClockDisplay.textContent = shotClock;
+                
+                if (shotClock <= 0) {
+                    clearInterval(shotClockTimer);
+                    if (ballInHand) {
+                        // Shot clock violation
+                        shotsLeft--;
+                        shotsLeftDisplay.textContent = shotsLeft;
+                        
+                        if (shotsLeft <= 0) {
+                            gameOver();
+                            return;
+                        }
+                        
+                        resetBall();
+                        startShotClock();
+                    }
+                }
+            }, 1000);
+        }
+        
+        function gameOver() {
+            clearInterval(shotClockTimer);
+            finalScoreDisplay.textContent = score;
+            gameOverScreen.style.display = 'block';
+        }
+        
+        function restartGame() {
+            score = 0;
+            shotsLeft = 5;
+            scoreDisplay.textContent = score;
+            shotsLeftDisplay.textContent = shotsLeft;
+            gameOverScreen.style.display = 'none';
+            
+            resetBall();
+            startShotClock();
+        }
+    </script>
+</body>
+</html>
